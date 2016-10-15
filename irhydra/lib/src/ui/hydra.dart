@@ -240,26 +240,6 @@ class HydraElement extends PolymerElement {
   get irpane => shadowRoot.querySelector("#ir-pane");
   get sourcePane => shadowRoot.querySelector("#source-pane");
 
-  openCompilation(e, selectedFiles, target) {
-    if (selectedFiles.length > 1) {
-      reset();
-    }
-    files = selectedFiles
-      .map((file) => new TextFile(file, loadData))
-      .toList();
-    _loadFiles();
-  }
-
-  reloadCurrentFiles(e, detail, target) {
-    reset();
-    _loadFiles();
-  }
-
-  _loadFiles() {
-    closeSplash();
-    _wait(files, (file) => file.load());
-  }
-
   _wait(data, action) {
     final SpinnerElement spinner = $["spinner"];
     spinner.start();
@@ -366,41 +346,6 @@ class HydraElement extends PolymerElement {
     codeMode = "none";
     activeTab = "ir";
     phase = ir = null;
-  }
-
-  _loadProfile(text) {
-    try {
-      profile = perf.parse(text);
-    } catch (e, stack) {
-      print("ERROR loading profile");
-      print("${e}");
-      print("${stack}");
-      return;
-    }
-    _attachProfile();
-  }
-
-  _attachProfile() {
-    if (methods != null && profile != null) {
-      try {
-        profile.attachAll(mode, methods);
-        sortMethodsBy = "ticks";
-      } catch (e, stack) {
-        print("ERROR while attaching profile");
-        print(e);
-        print(stack);
-      }
-    }
-  }
-
-  loadProfile(e, selectedFiles, target) {
-    final profileFiles = selectedFiles
-      .map((file) => new TextFile(file, _loadProfile))
-      .toList();
-    files = []
-      ..addAll(files)
-      ..addAll(profileFiles);
-    _wait(profileFiles, (file) => file.load());
   }
 
   /** Load data from the given textual artifact if any mode can handle it. */
