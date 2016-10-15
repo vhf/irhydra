@@ -14,31 +14,7 @@ import "package:irhydra/src/modes/v8/v8.dart" as v8;
 import 'package:irhydra/src/ui/spinner-element.dart';
 import 'package:polymer/polymer.dart';
 
-import 'package:archive/archive.dart' show BZip2Decoder, TarDecoder;
-
-_createV8DeoptDemo(type) => [
-  "demos/v8/deopt-${type}/hydrogen.cfg",
-  "demos/v8/deopt-${type}/code.asm"
-];
-
-_createWebRebelsDemo(name) => [
-  "demos/webrebels2014/${name}/data.tar.bz2"
-];
-
-final DEMOS = {
-  "demo-1": _createV8DeoptDemo("eager"),
-  "demo-2": _createV8DeoptDemo("soft"),
-  "demo-3": _createV8DeoptDemo("lazy"),
-  "demo-4": ["demos/dart/code.asm"],
-  "webrebels-2014-concat": _createWebRebelsDemo("1-concat"),
-  "webrebels-2014-concat-fixed": _createWebRebelsDemo("2-concat-fixed"),
-  "webrebels-2014-prototype-node": _createWebRebelsDemo("3-prototype-node"),
-  "webrebels-2014-prototype-node-getter": _createWebRebelsDemo("4-prototype-node-getter"),
-  "webrebels-2014-prototype": _createWebRebelsDemo("5-prototype"),
-  "webrebels-2014-prototype-tostring": _createWebRebelsDemo("6-prototype-tostring"),
-  "webrebels-2014-method-function": _createWebRebelsDemo("7-method-function"),
-  "webrebels-2014-method-function-hack": _createWebRebelsDemo("8-method-function-hack"),
-};
+import 'package:archive/archive.dart' show GZipDecoder;
 
 class TextFile {
   final file;
@@ -111,27 +87,25 @@ class HydraElement extends PolymerElement {
     ];
   }
 
-  _requestArtifact(path) {
+  _requestArtifacts(path) {
     done(x) {
       shadowRoot.querySelector("#progress-toast").dismiss();
       progressUrl = progressValue = progressAction = null;
     }
 
-    if (path.endsWith(".tar.bz2")) {
+    if (path.endsWith("gz")) {
       unpack(data) {
         if (data is ByteBuffer) {
           data = new Uint8List.view(data);
         }
 
-        final tar = timeAndReport(() => js.context.callMethod('BUNZIP2', [data]),
+        final src = timeAndReport(() => new GZipDecoder().decodeBytes(data),
             (ms) => "Unpacking ${path} (${data.length} bytes) in JS took ${ms} ms (${data.length / ms} bytes/ms)");
-
-        return new TarDecoder().decodeBytes(tar).files;
+        return src;
       }
 
-      loadFiles(files) {
-        for (var file in files)
-          loadData(new String.fromCharCodes(file.content));
+      loadFile(file) {
+        loadData(new String.fromCharCodes(file));
       }
 
       progress(evt) {
@@ -150,7 +124,7 @@ class HydraElement extends PolymerElement {
           return new async.Future.delayed(const Duration(milliseconds: 100), () => rq.response);
         })
         .then(unpack)
-        .then(loadFiles)
+        .then(loadFile)
         .then(done, onError: done);
     } else {
       progressAction = "Downloading";
@@ -160,31 +134,15 @@ class HydraElement extends PolymerElement {
     }
   }
 
-  static final DRIVE_REGEXP = new RegExp(r"^drive:([_\w.]+)$");
-  static const DRIVE_ROOT = 'http://googledrive.com/host/0B6XwArTFTLptOWZfVTlUWkdkMTg/';
+  static final ID_REGEXP = new RegExp(r"^([23456789ABCDEFGHJKLMNPQRSTWXYZabcdefghijkmnopqrstuvwxyz]{17})$");
 
-  static final GIST_REGEXP = new RegExp(r"^gist:([a-f0-9]+)$");
-  static const GIST_ROOT = 'https://gist.githubusercontent.com/raw/';
-
-  _loadDemo(fragment) {
-    if (DEMOS.containsKey(fragment)) {
-      _wait(DEMOS[fragment], _requestArtifact);
-      return true;
-    }
-
-    final driveMatch = DRIVE_REGEXP.firstMatch(fragment);
-    if (driveMatch != null) {
-      _wait(["${DRIVE_ROOT}${driveMatch.group(1)}"], _requestArtifact);
-      return true;
-    }
-
-    // Load artifacts from gist when fragment matches 'gist:gistId'.
-    final gistMatch = GIST_REGEXP.firstMatch(fragment);
-    if (gistMatch != null) {
+  _loadArtifacts(fragment) {
+    final idMatch = ID_REGEXP.firstMatch(fragment);
+    if (idMatch != null) {
       _wait([
-        "${GIST_ROOT}${gistMatch.group(1)}/hydrogen.cfg",
-        "${GIST_ROOT}${gistMatch.group(1)}/code.asm"
-      ], _requestArtifact);
+        "/artifacts/${idMatch.group(1)}.cfg.gz",
+        "/artifacts/${idMatch.group(1)}.asm.gz"
+      ], _requestArtifacts);
       return true;
     }
 
@@ -195,7 +153,7 @@ class HydraElement extends PolymerElement {
     super.attached();
 
     new async.Timer(const Duration(milliseconds: 50), () {
-      if (!_loadDemo(Uri.parse(window.location.href).fragment)) {
+      if (!_loadArtifacts(Uri.parse(window.location.href).fragment)) {
         window.location.hash = "";
       }
     });
@@ -203,7 +161,7 @@ class HydraElement extends PolymerElement {
     window.onHashChange.listen((e) {
       final to = Uri.parse(e.newUrl).fragment;
 
-      if (_loadDemo(to)) {
+      if (_loadArtifacts(to)) {
         return;
       }
 
