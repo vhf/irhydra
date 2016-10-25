@@ -51,6 +51,11 @@
     </paper-toast>
 
     <div class="header">
+      <div class="tab-header about">
+        <a href="https://github.com/mraleph/irhydra">&gt; about IRHydra<sup>2</sup></a>
+        <br>
+        <a href="https://mono.morph.ist">&gt; back to monomorphist</a>
+      </div>
       <template if="{{methods != null && !methods.isEmpty}}">
         <button on-click="{{toggleNameDemangling}}" title="Demangle method names" class="{{ {'unchecked': !demangleNames} }}"><i class="fa fa-dollar"></i></button>
       </template>

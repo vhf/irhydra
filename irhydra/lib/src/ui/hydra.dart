@@ -7,8 +7,6 @@ import 'dart:typed_data' show ByteBuffer, Uint8List;
 
 import 'package:ui_utils/html_utils.dart' show toHtml;
 import 'package:ui_utils/xref.dart' show XRef, POPOVER;
-import "package:irhydra/src/modes/perf.dart" as perf;
-import "package:irhydra/src/modes/dartvm/dartvm.dart" as dartvm;
 import "package:irhydra/src/modes/art/art.dart" as art;
 import "package:irhydra/src/modes/v8/v8.dart" as v8;
 import 'package:irhydra/src/ui/spinner-element.dart';
@@ -76,14 +74,15 @@ class HydraElement extends PolymerElement {
   @observable var timeline;
 
   var profile;
-
   var blockRef;
+
+  static final ID_REGEXP = new RegExp(r"^([23456789ABCDEFGHJKLMNPQRSTWXYZabcdefghijkmnopqrstuvwxyz]{17})$");
+  @observable var idFound = "";
 
   HydraElement.created() : super.created() {
     MODES = [
       () => new art.Mode(),  // Must come before V8 mode.
       () => new v8.Mode(this),
-      () => new dartvm.Mode(),
     ];
   }
 
@@ -134,36 +133,34 @@ class HydraElement extends PolymerElement {
     }
   }
 
-  static final ID_REGEXP = new RegExp(r"^([23456789ABCDEFGHJKLMNPQRSTWXYZabcdefghijkmnopqrstuvwxyz]{17})$");
-
-  _loadArtifacts(fragment) {
-    final idMatch = ID_REGEXP.firstMatch(fragment);
-    if (idMatch != null) {
-      _wait([
-        "/artifacts/${idMatch.group(1)}.cfg.gz",
-        "/artifacts/${idMatch.group(1)}.asm.gz"
-      ], _requestArtifacts);
-      return true;
-    }
-
-    return false;
+  _loadArtifacts(id) {
+    _wait([
+      "/artifacts/${id}/hydrogen.cfg.gz",
+      "/artifacts/${id}/code.asm.gz"
+    ], _requestArtifacts);
   }
 
   attached() {
     super.attached();
 
     new async.Timer(const Duration(milliseconds: 50), () {
-      if (!_loadArtifacts(Uri.parse(window.location.href).fragment)) {
+      final params = Uri.parse(window.location.href).queryParameters;
+      if (params.containsKey("id")) {
+        final idMatch = ID_REGEXP.firstMatch(params["id"]);
+        print(idMatch.toString());
+        if (idMatch != null) {
+          idFound = idMatch.group(1);
+        }
+      }
+      if (idFound != "") {
+        _loadArtifacts(idFound);
+      } else {
         window.location.hash = "";
       }
     });
 
     window.onHashChange.listen((e) {
       final to = Uri.parse(e.newUrl).fragment;
-
-      if (_loadArtifacts(to)) {
-        return;
-      }
 
       if (to == "source" || to == "ir" || to == "graph") {
         activeTab = to;

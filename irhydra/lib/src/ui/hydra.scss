@@ -32,6 +32,20 @@ paper-toast > paper-progress {
   z-index: 1000;
 }
 
+.about {
+  float: right;
+  font-family: RobotoDraft;
+  font-size: 16px;
+  font-weight: 100;
+  line-height: 16px;
+  margin-right: 10px;
+  text-size-adjust: 100%;
+  a {
+    text-decoration: none;
+    color: $tabs-header-color;
+  }
+}
+
 button {
   background: $toolbar-background;
   color: $toolbar-color;
