@@ -13,3 +13,5 @@ dependencies:
 transformers:
 - observe
 - liquid
+- $dart2js:
+    sourceMaps: true

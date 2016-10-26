@@ -32,18 +32,8 @@ paper-toast > paper-progress {
   z-index: 1000;
 }
 
-.about {
+.tab-right {
   float: right;
-  font-family: RobotoDraft;
-  font-size: 16px;
-  font-weight: 100;
-  line-height: 16px;
-  margin-right: 10px;
-  text-size-adjust: 100%;
-  a {
-    text-decoration: none;
-    color: $tabs-header-color;
-  }
 }
 
 button {
@@ -272,4 +262,28 @@ button.unchecked {
   content: "\f017";
 }
 
-.fa-question-circle:before { content:"\f059"; }
+.fa-question-circle:before {
+  content:"\f059";
+}
+
+.fa-external-link:before {
+  content:"\f08e";
+}
+
+.fa-arrow-circle:before {
+  content:"\f190";
+}
+
+.fa-file-code:before {
+  content:"\f1c9";
+}
+
+.tab-link {
+  color: black;
+  font-size: 16pt;
+  border: 0px;
+  width: 40px;
+  height: 40px;
+  padding-top: 5px;
+  display: block;
+}

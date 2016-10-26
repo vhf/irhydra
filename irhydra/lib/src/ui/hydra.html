@@ -51,11 +51,15 @@
     </paper-toast>
 
     <div class="header">
-      <div class="tab-header about">
-        <a href="https://github.com/mraleph/irhydra">&gt; about IRHydra<sup>2</sup></a>
-        <br>
-        <a href="https://mono.morph.ist">&gt; back to monomorphist</a>
+      <div class="tab-header tab-right">
+        <a class="tab-link" href="https://github.com/mraleph/irhydra" title="about IRHydra2"><i class="fa fa-external-link"></i></a>
       </div>
+      <div class="tab-header tab-right">
+        <a class="tab-link" href="/" title="back to monomorphist"><i class="fa fa-arrow-circle"></i></a>
+      </div>
+        <div class="tab-header tab-right">
+          <a class="tab-link" href="/ir/{{idFound}}" title="back to code and logs"><i class="fa fa-file-code"></i></a>
+        </div>
       <template if="{{methods != null && !methods.isEmpty}}">
         <button on-click="{{toggleNameDemangling}}" title="Demangle method names" class="{{ {'unchecked': !demangleNames} }}"><i class="fa fa-dollar"></i></button>
       </template>
