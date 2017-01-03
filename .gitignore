@@ -1,4 +1,5 @@
 packages
+irhydra/.packages
 build/
 .project
 *.iml
